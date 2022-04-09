@@ -23,6 +23,10 @@ const Container = styled.div`
 //   margin-top: 8px;
 // `
 
+const Table = styled.table`
+  text-align: left;
+`
+
 type TagProps = {
   background: string
 }
@@ -89,7 +93,7 @@ const SafeApp = (): ReactElement => {
     <Container>
       <Title size="md">Treasury Portfolio</Title>
       <PieChart data={pieChartData} paddingAngle={0.5} lineWidth={25} startAngle={-90} radius={20} animate={true} />
-      <table>
+      <Table>
         <tbody>
           {balances.map((token) => (
             <tr>
@@ -101,7 +105,7 @@ const SafeApp = (): ReactElement => {
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
     </Container>
   )
 }
