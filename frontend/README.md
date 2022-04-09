@@ -1,70 +1,51 @@
-# Getting Started with Create React App
+# My Safe App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Getting Started
 
-## Available Scripts
+Install dependencies and start a local dev server.
 
-In the project directory, you can run:
+```
+yarn install
+cp .env.sample .env
+yarn start
+```
 
-### `npm start`
+Then:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- If HTTPS is used (by default enabled)
+  - Open your Safe app locally (by default via https://localhost:3000/) and accept the SSL error.
+- Go to Safe Multisig web interface
+  - [Mainnet](https://app.gnosis-safe.io)
+  - [Rinkeby](https://rinkeby.gnosis-safe.io/app)
+- Create your test safe
+- Go to Apps -> Manage Apps -> Add Custom App
+- Paste your localhost URL, default is https://localhost:3000/
+- You should see Safe App Starter as a new app
+- Develop your app from there
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Features
 
-### `npm test`
+Gnosis Safe App Starter combines recommendations described in the following repositories:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- [Safe Apps SDK](https://github.com/gnosis/safe-apps-sdk)
+- [safe-react-components](https://github.com/gnosis/safe-react-components)
 
-### `npm run build`
+You can use the `useSafe` React hook to interact with the Safe Apps SDK
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```
+const safe = useSafe();
+console.log(safe.info);
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Safe React Components are also integrated and ready to use. [See all components](https://components.gnosis-safe.io/).
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Dependencies
 
-### `npm run eject`
+### Included
+- [`@gnosis.pm/safe-react-components`](https://github.com/gnosis/safe-react-components) (UI components themed for the Safe Multisig interface)
+- [`@rmeissner/safe-apps-react-sdk`](https://github.com/rmeissner/safe-sdks-js/tree/master/safe-apps-react-sdk) (React hook for the Safe Apps SDK)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Recommended
+- [`ethers`](https://github.com/ethers-io/ethers.js) (Library for interacting with Ethereum)
+- [`web3`](https://github.com/ethereum/web3.js/) (Library for interacting with Ethereum)
+- [`@studydefi/money-legos`](https://github.com/studydefi/money-legos) (Library for DeFi interactions)
