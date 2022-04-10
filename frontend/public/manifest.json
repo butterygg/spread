@@ -1,8 +1,8 @@
 {
-  "short_name": "Safe App",
-  "name": "Gnosis Safe App Starter",
-  "description": "Describe your Safe App here",
-  "iconPath": "logo.svg",
+  "short_name": "Butter",
+  "name": "Butter treasury management",
+  "description": "Manage diversification strategies for your treasury with Butter.",
+  "iconPath": "logosquare.png",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,12 +10,12 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "logosquare.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
+      "src": "logosquare.png",
       "type": "image/png",
       "sizes": "512x512"
     }
