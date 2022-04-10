@@ -1,3 +1,6 @@
+![Butter_VI_Final_Full Logo_Light_2x2 5%](https://user-images.githubusercontent.com/1884912/162629474-1a630853-9b88-43db-b38b-08eaf3cfab9c.png)
+
+
 # Butter
 
 DAO treasuries comprise the entirety of the resources available to a DAO and carry **significant risk of downside exposure to prolonged bouts of market volatility.**
