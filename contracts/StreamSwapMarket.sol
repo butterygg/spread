@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 import {ISuperfluid, ISuperToken, ISuperApp, ISuperAgreement, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
@@ -33,6 +34,7 @@ abstract contract StreamSwapMarket is Ownable, SuperAppBase, Initializable {
         uint256 lastDistributionAt; // The last time a distribution was made
         uint256 rateTolerance; // The percentage to deviate from the oracle scaled to 1e6
         uint128 feeRate;
+        bytes32 poolId;
         address owner; // The owner of the market (reciever of fees)
         mapping(uint32 => OutputPool) outputPools; // Maps IDA indexes to their distributed Supertokens
         mapping(ISuperToken => uint32) outputPoolIndicies; // Maps tokens to their IDA indexes in OutputPools
@@ -193,11 +195,13 @@ abstract contract StreamSwapMarket is Ownable, SuperAppBase, Initializable {
     /// @param _feeRate Fee rate
     /// @param _emissionRate Emission rate
     /// @param _shareScaler Scaler
+    /// @param _poolId Balancer pool id
     function addOutputPool(
         ISuperToken _token,
         uint128 _feeRate,
         uint256 _emissionRate,
-        uint128 _shareScaler
+        uint128 _shareScaler,
+        bytes32 _poolId
     ) public virtual onlyOwner {
         require(market.numOutputPools < MAX_OUTPUT_POOLS, "Too many pools");
 
@@ -211,6 +215,7 @@ abstract contract StreamSwapMarket is Ownable, SuperAppBase, Initializable {
         market.outputPoolIndicies[_token] = market.numOutputPools;
         _createIndex(market.numOutputPools, _token);
         market.numOutputPools++;
+        market.poolId = _poolId;
     }
 
     // Standardized functionality for all StreamSwap Markets

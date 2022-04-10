@@ -1,9 +1,9 @@
-// SPDX-License-Identifier: AGPLv3
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
-import "@balancer-labs/v2-vault/contracts/interfaces/IVault.sol";
+import {IVault, IAsset} from "./interfaces/IVault.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import "./StreamSwapMarket.sol";
 import "hardhat/console.sol";
 
@@ -30,19 +30,21 @@ contract StreamSwapOneWayMarket is StreamSwapMarket {
     /// @param _outputToken Superfluid output token
     /// @param _feeRate Fee rate
     /// @param _shareScaler Amount to scale back shares of pool
+    /// @param _poolId Balancer pool id
     function initializeOneWayMarket(
         ISuperToken _inputToken,
         uint256 _rateTolerance,
         ISuperToken _outputToken,
         uint128 _feeRate,
-        uint128 _shareScaler
+        uint128 _shareScaler,
+        bytes32 _poolId
     ) public onlyOwner initializer {
         StreamSwapMarket.initializeMarket(
             _inputToken,
             _rateTolerance,
             _feeRate
         );
-        addOutputPool(_outputToken, _feeRate, 0, _shareScaler);
+        addOutputPool(_outputToken, _feeRate, 0, _shareScaler, _poolId);
 
         // Approvals
         // Unlimited approve for sushiswap
@@ -86,6 +88,7 @@ contract StreamSwapOneWayMarket is StreamSwapMarket {
         _swap(
             market.inputToken,
             market.outputPools[OUTPUT_INDEX].token,
+            market.poolId,
             ISuperToken(market.inputToken).balanceOf(address(this)),
             block.timestamp + 3600
         );
@@ -168,11 +171,13 @@ contract StreamSwapOneWayMarket is StreamSwapMarket {
     /// @dev Swap via Balancer V2 vault
     /// @param input Superfluid input token
     /// @param output Superfluid output token
+    /// @param poolId pool id
     /// @param amount Assumes outputToken.balanceOf(address(this))
     /// @param deadline Deadline for swap
     function _swap(
         ISuperToken input,
         ISuperToken output,
+        bytes32 poolId,
         uint256 amount, // Assumes
         uint256 deadline
     ) internal returns (uint256) {
@@ -191,19 +196,16 @@ contract StreamSwapOneWayMarket is StreamSwapMarket {
             ERC20(inputToken).balanceOf(address(this)) *
             (10**(18 - ERC20(inputToken).decimals()));
 
-        // Scale back from 1e18 to outputToken decimals
-        minOutput = (minOutput * (10**(ERC20(outputToken).decimals()))) / 1e18;
-
         // Scale it back to inputToken decimals
         amount = amount / (10**(18 - ERC20(inputToken).decimals()));
 
         // Swap via Balancer
         IVault.SingleSwap memory singleSwap = IVault.SingleSwap(
-            _poolId,
+            poolId,
             IVault.SwapKind.GIVEN_IN,
             IAsset(inputToken),
             IAsset(outputToken),
-            _amount,
+            amount,
             ""
         );
         IVault.FundManagement memory fundMgmt = IVault.FundManagement(
@@ -212,7 +214,7 @@ contract StreamSwapOneWayMarket is StreamSwapMarket {
             payable(address(this)),
             false
         );
-        vault.swap(singleSwap, fundMgmt, 1, block.timestamp);
+        vault.swap(singleSwap, fundMgmt, 1, deadline);
 
         // Assumes `amount` was outputToken.balanceOf(address(this))
         outputAmount = ERC20(outputToken).balanceOf(address(this));
