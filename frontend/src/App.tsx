@@ -7,10 +7,10 @@ import { useSafeAppsSDK } from '@gnosis.pm/safe-apps-react-sdk'
 import SafeAppsSDK from '@gnosis.pm/safe-apps-sdk/dist/src/sdk'
 import { SafeAppProvider } from '@gnosis.pm/safe-apps-provider'
 
-// import WEIGHTED_POOL_FACTORY_ABI from './weightedpoolfactory.json'
-import WEIGHTED_POOL_ABI from './weightedpool.json'
-import VAULT_ABI from './balancervault.json'
-// import ERC20_ABI from './erc20.json'
+import WEIGHTED_POOL_FACTORY_ABI from './abi/weightedpoolfactory.json'
+import WEIGHTED_POOL_ABI from './abi/weightedpool.json'
+import VAULT_ABI from './abi/balancervault.json'
+import ERC20_ABI from './abi/erc20.json'
 
 type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extends (...args: any) => Promise<infer R> ? R : any
 
@@ -78,30 +78,30 @@ const colorOfToken = (symbol: string) => {
 const deployPool = async (provider: ethers.providers.Web3Provider, safeAddr: string) => {
   // Contracts
   const VAULT = '0xBA12222222228d8Ba445958a75a0704d566BF2C8'
-  // const WEIGHTED_POOL_FACTORY = '0x8E9aa87E45e92bad84D5F8DD1bff34Fb92637dE9'
-  // const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+  const WEIGHTED_POOL_FACTORY = '0x8E9aa87E45e92bad84D5F8DD1bff34Fb92637dE9'
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
   // Tokens -- MUST be sorted numerically
   const GNT = '0x33c41eE5647c012f8CE9930EE05FC7aF86244921'
   const DAI = '0x50c075b3Dc738D3E6372975F74101B0e5780f58f'
   const tokens = [GNT, DAI]
 
-  // const NAME = 'GovernanceToken DAI pool'
-  // const SYMBOL = '10GNT-90DAI'
-  // const swapFeePercentage = BigInt(0.005e18) // 0.5%
-  // const weights = [BigInt(0.1e18), BigInt(0.9e18)]
+  const NAME = 'GovernanceToken DAI pool'
+  const SYMBOL = '10GNT-90DAI'
+  const swapFeePercentage = BigInt(0.005e18) // 0.5%
+  const weights = [BigInt(0.1e18), BigInt(0.9e18)]
 
-  // const factory = new ethers.Contract(WEIGHTED_POOL_FACTORY, WEIGHTED_POOL_FACTORY_ABI, provider.getSigner())
+  const factory = new ethers.Contract(WEIGHTED_POOL_FACTORY, WEIGHTED_POOL_FACTORY_ABI, provider.getSigner())
 
-  // const tx = await factory.create(NAME, SYMBOL, tokens, weights, swapFeePercentage, ZERO_ADDRESS)
-  // const receipt = await tx.wait()
+  const createTx = await factory.create(NAME, SYMBOL, tokens, weights, swapFeePercentage, ZERO_ADDRESS)
+  const createTxReceipt = await createTx.wait()
 
-  // // We need to get the new pool address out of the PoolCreated event
-  // const events = receipt.events.filter((e: any) => e.event === 'PoolCreated')
-  // const poolAddress = events[0].args.pool
-  // console.log({ poolAddress })
+  // We need to get the new pool address out of the PoolCreated event
+  const events = createTxReceipt.events.filter((e: any) => e.event === 'PoolCreated')
+  const poolAddress = events[0].args.pool
+  console.log({ poolAddress })
 
-  const poolAddress = '0xde620bb8be43ee54d7aa73f8e99a7409fe511084'
+  // const poolAddress = '0xde620bb8be43ee54d7aa73f8e99a7409fe511084'
 
   // We're going to need the PoolId later, so ask the contract for it
   // const pool = await ethers.getContractAt('WeightedPool', poolAddress)
@@ -118,12 +118,12 @@ const deployPool = async (provider: ethers.providers.Web3Provider, safeAddr: str
   const initialBalances = [BigInt(1e6), BigInt(1e6)]
   console.log({ initialBalances })
 
-  // // Need to approve the Vault to transfer the tokens!
-  // // Can do through Etherscan, or programmatically
-  // for (const i in tokens) {
-  //   const tokenContract = new ethers.Contract(tokens[i], ERC20_ABI, provider.getSigner())
-  //   await tokenContract.approve(VAULT, initialBalances[i])
-  // }
+  // Need to approve the Vault to transfer the tokens!
+  // Can do through Etherscan, or programmatically
+  for (const i in tokens) {
+    const tokenContract = new ethers.Contract(tokens[i], ERC20_ABI, provider.getSigner())
+    await tokenContract.approve(VAULT, initialBalances[i])
+  }
 
   // Construct userData
   const JOIN_KIND_INIT = 0
@@ -141,8 +141,8 @@ const deployPool = async (provider: ethers.providers.Web3Provider, safeAddr: str
   console.log({ joinTx })
 
   // You can wait for it like this, or just print the tx hash and monitor
-  const receipt = await joinTx.wait()
-  console.log({ receipt })
+  const jointTxReceipt = await joinTx.wait()
+  console.log({ jointTxReceipt })
 }
 
 const DeployPoolButton = (): ReactElement => {
