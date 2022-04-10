@@ -26,5 +26,10 @@
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.2",
     "hardhat": "^2.9.3"
+  },
+  "dependencies": {
+    "@balancer-labs/v2-deployments": "^2.3.0",
+    "@balancer-labs/v2-vault": "^2.0.0",
+    "@superfluid-finance/ethereum-contracts": "^1.1.1"
   }
 }
