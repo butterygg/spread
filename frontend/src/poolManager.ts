@@ -13,9 +13,16 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 // Tokens -- MUST be sorted numerically
 const GNT = '0x33c41eE5647c012f8CE9930EE05FC7aF86244921'
-const DAI = '0x50c075b3Dc738D3E6372975F74101B0e5780f58f'
+const DAI = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735'
 
 export type BigNumberish = string | number | BigNumber
+
+export type JoinPoolRequest = {
+  assets: string[]
+  maxAmountsIn: BigNumberish[]
+  userData: string
+  fromInternalBalance: boolean
+}
 
 function parseScientific(num: string): string {
   // If the number is not in scientific notation return it as it is
@@ -29,7 +36,7 @@ function parseScientific(num: string): string {
   const [coefficient, exponent] = num.toLowerCase().split('e')
   let zeros = Math.abs(Number(exponent))
   const exponentSign = Math.sign(Number(exponent))
-  const [integer, decimals] = (coefficient.indexOf('.') != -1 ? coefficient : `${coefficient}.`).split('.')
+  const [integer, decimals] = (coefficient.indexOf('.') !== -1 ? coefficient : `${coefficient}.`).split('.')
 
   if (exponentSign === -1) {
     zeros -= integer.length
@@ -63,8 +70,9 @@ export const createWeightedPool = async (
   provider: ethers.providers.Web3Provider,
   tokens: string[],
 ): Promise<string> => {
-  const NAME = 'GovernanceToken DAI pool'
-  const SYMBOL = '10GNT-90DAI'
+  console.log('Creating weighted pool…')
+  const NAME = 'GovernanceToken DAI pool v2'
+  const SYMBOL = 'xGNT-yDAI'
   const swapFeePercentage = BigInt(0.005e18) // 0.5%
   const weights = [BigInt(0.1e18), BigInt(0.9e18)]
 
@@ -74,13 +82,15 @@ export const createWeightedPool = async (
   const createTxReceipt = await createTx.wait()
 
   // We need to get the new pool address out of the PoolCreated event
-  const events = createTxReceipt.events.filter((e: any) => e.event === 'PoolCreated')
+  const events = createTxReceipt.events.filter((e: ethers.Event) => e.event === 'PoolCreated')
   const poolAddress = events[0].args.pool
   console.log({ poolAddress })
   return poolAddress
 }
 
 export const allowTokens = async (provider: ethers.providers.Web3Provider, tokens: string[]): Promise<void> => {
+  console.log('Giving tokens allowances…')
+
   // Need to approve the Vault to transfer the tokens!
   // Can do through Etherscan, or programmatically
   for (const i in tokens) {
@@ -98,22 +108,23 @@ export const getVault = async (provider: ethers.providers.Web3Provider): Promise
 }
 
 export const join = async (
-  provider: ethers.providers.Web3Provider,
-  safeAddr: string,
   vault: ethers.Contract,
+  safeAddr: string,
   poolId: string,
-  initialBalances: bigint[],
+  initialBalances: BigNumberish[],
   tokens: string[],
-  maxAmountsIn: bigint[],
+  maxAmountsIn: BigNumberish[],
   fromInternalBalance: boolean,
-): Promise<any> => {
+): Promise<ethers.ContractTransaction> => {
+  console.log('Joining the pool…')
+
   // Construct userData
   const JOIN_KIND_INIT = 0
   const initUserData = ethers.utils.defaultAbiCoder.encode(['uint256', 'uint256[]'], [JOIN_KIND_INIT, initialBalances])
+  console.log({ initUserData })
 
   // joins are done on the Vault
-  console.log({ safeAddr })
-  const joinPoolRequest = {
+  const joinPoolRequest: JoinPoolRequest = {
     assets: tokens,
     maxAmountsIn: maxAmountsIn,
     userData: initUserData,
@@ -129,8 +140,8 @@ export const deployPool = async (provider: ethers.providers.Web3Provider, safeAd
   // Tokens -- MUST be sorted numerically
   const tokens = [GNT, DAI]
 
-  // const poolAddress = await poolManager.createWeightedPool(provider, tokens)
-  const poolAddress = '0xde620bb8be43ee54d7aa73f8e99a7409fe511084'
+  const poolAddress = await createWeightedPool(provider, tokens)
+  // const poolAddress =
 
   // We're going to need the PoolId later, so ask the contract for it
   // const pool = await ethers.getContractAt('WeightedPool', poolAddress)
@@ -143,23 +154,26 @@ export const deployPool = async (provider: ethers.providers.Web3Provider, safeAd
 
   // Tokens must be in the same order
   // Values must be decimal-normalized!
-  const initialBalances = [BigInt(1e6), BigInt(1e6)]
+  const initialBalances = [1e6, 1e6]
   console.log({ initialBalances })
 
-  await allowTokens(provider, tokens)
+  // await allowTokens(provider, tokens)
 
-  const joinTx = await join(
+  // await testSendTokens(provider, safeAddr, vault.address)
+
+  console.log({
     provider,
     safeAddr,
     vault,
     poolId,
     initialBalances,
     tokens,
-    initialBalances, // [XXX] Rather use the js equiv to type(uint256).max;
-    false,
-  )
+  })
+
+  const joinTx = await join(vault, safeAddr, poolId, initialBalances, tokens, initialBalances, false)
 
   // You can wait for it like this, or just print the tx hash and monitor
+  console.log({ joinTx })
   const jointTxReceipt = await joinTx.wait()
   console.log({ jointTxReceipt })
 }
