@@ -1,10 +1,10 @@
 import { ethers, BigNumber } from 'ethers'
-import { Decimal } from 'decimal.js'
 
 import WEIGHTED_POOL_FACTORY_ABI from './abi/weightedpoolfactory.json'
 import ERC20_ABI from './abi/erc20.json'
 import VAULT_ABI from './abi/balancervault.json'
 import WEIGHTED_POOL_ABI from './abi/weightedpool.json'
+import { JoinPoolRequest } from '@balancer-labs/sdk'
 
 // Contracts
 const VAULT = '0xBA12222222228d8Ba445958a75a0704d566BF2C8'
@@ -15,57 +15,6 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const GNT = '0x33c41eE5647c012f8CE9930EE05FC7aF86244921'
 const DAI = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735'
 
-export type BigNumberish = string | number | BigNumber
-
-export type JoinPoolRequest = {
-  assets: string[]
-  maxAmountsIn: BigNumberish[]
-  userData: string
-  fromInternalBalance: boolean
-}
-
-function parseScientific(num: string): string {
-  // If the number is not in scientific notation return it as it is
-  if (!/\d+\.?\d*e[+-]*\d+/i.test(num)) return num
-
-  // Remove the sign
-  const numberSign = Math.sign(Number(num))
-  num = Math.abs(Number(num)).toString()
-
-  // Parse into coefficient and exponent
-  const [coefficient, exponent] = num.toLowerCase().split('e')
-  let zeros = Math.abs(Number(exponent))
-  const exponentSign = Math.sign(Number(exponent))
-  const [integer, decimals] = (coefficient.indexOf('.') !== -1 ? coefficient : `${coefficient}.`).split('.')
-
-  if (exponentSign === -1) {
-    zeros -= integer.length
-    num =
-      zeros < 0
-        ? integer.slice(0, zeros) + '.' + integer.slice(zeros) + decimals
-        : '0.' + '0'.repeat(zeros) + integer + decimals
-  } else {
-    if (decimals) zeros -= decimals.length
-    num =
-      zeros < 0
-        ? integer + decimals.slice(0, zeros) + '.' + decimals.slice(zeros)
-        : integer + decimals + '0'.repeat(zeros)
-  }
-
-  return numberSign < 0 ? '-' + num : num
-}
-
-export const bn = (x: BigNumberish | Decimal): BigNumber => {
-  if (BigNumber.isBigNumber(x)) return x
-  const stringified = parseScientific(x.toString())
-  const integer = stringified.split('.')[0]
-  return BigNumber.from(integer)
-}
-
-export const maxUint = (e: number): BigNumber => bn(2).pow(e).sub(1)
-
-export const MAX_UINT256: BigNumber = maxUint(256)
-
 export const createWeightedPool = async (
   provider: ethers.providers.Web3Provider,
   tokens: string[],
@@ -73,13 +22,15 @@ export const createWeightedPool = async (
   console.log('Creating weighted pool…')
   const NAME = 'GovernanceToken DAI pool v2'
   const SYMBOL = 'xGNT-yDAI'
-  const swapFeePercentage = BigInt(0.005e18) // 0.5%
-  const weights = [BigInt(0.1e18), BigInt(0.9e18)]
+  const swapFeePercentage = BigNumber.from(0.005e18) // 0.5%
+  const weights = [BigNumber.from(0.1e18), BigNumber.from(0.9e18)]
 
   const factory = new ethers.Contract(WEIGHTED_POOL_FACTORY, WEIGHTED_POOL_FACTORY_ABI, provider.getSigner())
 
   const createTx = await factory.create(NAME, SYMBOL, tokens, weights, swapFeePercentage, ZERO_ADDRESS)
   const createTxReceipt = await createTx.wait()
+
+  console.log({ createTxReceipt })
 
   // We need to get the new pool address out of the PoolCreated event
   const events = createTxReceipt.events.filter((e: ethers.Event) => e.event === 'PoolCreated')
@@ -88,17 +39,32 @@ export const createWeightedPool = async (
   return poolAddress
 }
 
-export const allowTokens = async (provider: ethers.providers.Web3Provider, tokens: string[]): Promise<void> => {
+export const allowTokens = async (
+  provider: ethers.providers.Web3Provider,
+  safeAddr: string,
+  tokens: string[],
+  allowances: BigNumber[],
+) => {
   console.log('Giving tokens allowances…')
 
   // Need to approve the Vault to transfer the tokens!
   // Can do through Etherscan, or programmatically
-  for (const i in tokens) {
-    const tokenContract = new ethers.Contract(tokens[i], ERC20_ABI, provider.getSigner())
-    await tokenContract.approve(VAULT, MAX_UINT256)
-  }
+  return tokens.map(async (token, idx) => {
+    const allowance = allowances[idx]
+    const tokenContract = new ethers.Contract(token, ERC20_ABI, provider.getSigner())
+    const existingAllowance = await tokenContract.allowance(safeAddr, VAULT)
 
-  console.log({ MAX_UINT256 })
+    if (existingAllowance > allowance) {
+      console.log({ [`token ${token} allowance of ${allowance} already exists`]: existingAllowance })
+      return
+    }
+
+    const tx = (await tokenContract.approve(VAULT, allowance)) as ethers.ContractTransaction
+    console.log({
+      [`tx for token ${token} allowance ${allowance}`]: tx,
+    })
+    return tx
+  })
 }
 
 export const getVault = async (provider: ethers.providers.Web3Provider): Promise<ethers.Contract> => {
@@ -111,9 +77,9 @@ export const join = async (
   vault: ethers.Contract,
   safeAddr: string,
   poolId: string,
-  initialBalances: BigNumberish[],
+  initialBalances: BigNumber[],
   tokens: string[],
-  maxAmountsIn: BigNumberish[],
+  maxAmountsIn: BigNumber[],
   fromInternalBalance: boolean,
 ): Promise<ethers.ContractTransaction> => {
   console.log('Joining the pool…')
@@ -140,8 +106,9 @@ export const deployPool = async (provider: ethers.providers.Web3Provider, safeAd
   // Tokens -- MUST be sorted numerically
   const tokens = [GNT, DAI]
 
+  // [TODO] Check if an equivalent pool already exists, if possible. Otherwise require a front-end input
   const poolAddress = await createWeightedPool(provider, tokens)
-  // const poolAddress =
+  // const poolAddress = '0x39cd55ff7e7d7c66d7d2736f1d5d4791cdab895b'
 
   // We're going to need the PoolId later, so ask the contract for it
   // const pool = await ethers.getContractAt('WeightedPool', poolAddress)
@@ -154,12 +121,10 @@ export const deployPool = async (provider: ethers.providers.Web3Provider, safeAd
 
   // Tokens must be in the same order
   // Values must be decimal-normalized!
-  const initialBalances = [1e6, 1e6]
+  const initialBalances = [BigNumber.from(1e6), BigNumber.from(1e6)]
   console.log({ initialBalances })
 
-  // await allowTokens(provider, tokens)
-
-  // await testSendTokens(provider, safeAddr, vault.address)
+  await allowTokens(provider, safeAddr, tokens, initialBalances)
 
   console.log({
     provider,
@@ -170,6 +135,7 @@ export const deployPool = async (provider: ethers.providers.Web3Provider, safeAd
     tokens,
   })
 
+  // [TODO] Must check if already joined. This might actually directly change the front-end.
   const joinTx = await join(vault, safeAddr, poolId, initialBalances, tokens, initialBalances, false)
 
   // You can wait for it like this, or just print the tx hash and monitor

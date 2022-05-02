@@ -18,9 +18,9 @@
   },
   "homepage": "https://github.com/lajarre/daotreasure#readme",
   "devDependencies": {
-    "@openzeppelin/contracts": "^4.5.0",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@openzeppelin/contracts": "^4.5.0",
     "chai": "^4.3.6",
     "dotenv": "^16.0.0",
     "ethereum-waffle": "^3.4.4",
@@ -28,6 +28,7 @@
     "hardhat": "^2.9.3"
   },
   "dependencies": {
+    "@balancer-labs/sdk": "^0.1.8",
     "@balancer-labs/v2-deployments": "^2.3.0",
     "@balancer-labs/v2-vault": "^2.0.0",
     "@superfluid-finance/ethereum-contracts": "^1.1.1"
