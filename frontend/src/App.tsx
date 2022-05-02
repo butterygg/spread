@@ -9,8 +9,6 @@ import { SafeAppProvider } from '@gnosis.pm/safe-apps-provider'
 
 import * as poolManager from './poolManager'
 
-type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extends (...args: any) => Promise<infer R> ? R : any
-
 const Container = styled.div`
   padding: 1rem;
   width: 100%;
@@ -37,7 +35,14 @@ const Tag = styled.span<TagProps>`
   line-height: 50px;
 `
 
-const getBalances = async (sdk: SafeAppsSDK) => {
+type Balance = {
+  name: string
+  symbol: string
+  balance: number
+  fiatBalance: number
+}
+
+const getBalances = async (sdk: SafeAppsSDK): Promise<Balance[]> => {
   const safeBalanceResponse = await sdk.safe.experimental_getBalances()
   const ERC20Balances = safeBalanceResponse.items.filter(
     (token) => token.tokenInfo.type === 'ERC20' || token.tokenInfo.type === 'NATIVE_TOKEN',
@@ -158,7 +163,7 @@ const ModalButton = (): ReactElement => {
 
 const SafeApp = (): ReactElement => {
   const { sdk } = useSafeAppsSDK()
-  const [balances, setBalances] = useState<AsyncReturnType<typeof getBalances>>([])
+  const [balances, setBalances] = useState<Balance[]>([])
 
   useEffect(() => {
     ;(async () => {
