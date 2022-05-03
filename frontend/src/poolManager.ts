@@ -1,4 +1,4 @@
-import { ethers, BigNumber } from 'ethers'
+import { ethers } from 'ethers'
 
 import WEIGHTED_POOL_FACTORY_ABI from './abi/weightedpoolfactory.json'
 import ERC20_ABI from './abi/erc20.json'
@@ -22,8 +22,8 @@ export const createWeightedPool = async (
   console.log('Creating weighted pool…')
   const NAME = 'GovernanceToken DAI pool v2'
   const SYMBOL = 'xGNT-yDAI'
-  const swapFeePercentage = BigNumber.from(0.005e18) // 0.5%
-  const weights = [BigNumber.from(0.1e18), BigNumber.from(0.9e18)]
+  const swapFeePercentage = BigInt(0.005e18) // 0.5%
+  const weights = [BigInt(0.1e18), BigInt(0.9e18)]
 
   const factory = new ethers.Contract(WEIGHTED_POOL_FACTORY, WEIGHTED_POOL_FACTORY_ABI, provider.getSigner())
 
@@ -43,7 +43,7 @@ export const allowTokens = async (
   provider: ethers.providers.Web3Provider,
   safeAddr: string,
   tokens: string[],
-  allowances: BigNumber[],
+  allowances: BigInt[],
 ) => {
   console.log('Giving tokens allowances…')
 
@@ -77,9 +77,9 @@ export const join = async (
   vault: ethers.Contract,
   safeAddr: string,
   poolId: string,
-  initialBalances: BigNumber[],
+  initialBalances: BigInt[],
   tokens: string[],
-  maxAmountsIn: BigNumber[],
+  maxAmountsIn: BigInt[],
   fromInternalBalance: boolean,
 ): Promise<ethers.ContractTransaction> => {
   console.log('Joining the pool…')
@@ -92,7 +92,7 @@ export const join = async (
   // joins are done on the Vault
   const joinPoolRequest: JoinPoolRequest = {
     assets: tokens,
-    maxAmountsIn: maxAmountsIn,
+    maxAmountsIn: maxAmountsIn.map(ethers.BigNumber.from),
     userData: initUserData,
     fromInternalBalance: fromInternalBalance,
   }
@@ -121,7 +121,7 @@ export const deployPool = async (provider: ethers.providers.Web3Provider, safeAd
 
   // Tokens must be in the same order
   // Values must be decimal-normalized!
-  const initialBalances = [BigNumber.from(1e6), BigNumber.from(1e6)]
+  const initialBalances = [BigInt(1e6), BigInt(1e6)]
   console.log({ initialBalances })
 
   await allowTokens(provider, safeAddr, tokens, initialBalances)
