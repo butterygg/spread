@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@balancer-labs/balancer-js": "^1.0.1",
+    "@balancer-labs/sdk": "^0.1.8",
     "@gnosis.pm/cra-template-safe-app": "4.0.1",
     "@gnosis.pm/safe-apps-provider": "^0.11.0",
     "@gnosis.pm/safe-apps-react-sdk": "^4.3.1",
