@@ -1,5 +1,5 @@
 {
-  "name": "daotreasure",
+  "name": "spread",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,15 +8,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lajarre/daotreasure.git"
+    "url": "git+https://github.com/butterdao/spread.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/lajarre/daotreasure/issues"
+    "url": "https://github.com/butterdao/spread/issues"
   },
-  "homepage": "https://github.com/lajarre/daotreasure#readme",
+  "homepage": "https://github.com/butterdao/spread#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.3",

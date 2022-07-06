@@ -1,7 +1,7 @@
 {
-  "short_name": "Butter",
-  "name": "Butter treasury management",
-  "description": "Manage diversification strategies for your treasury with Butter.",
+  "short_name": "Spread",
+  "name": "Spread treasury management local",
+  "description": "Manage diversification strategies for your treasury with Spread.",
   "iconPath": "logosquare.png",
   "icons": [
     {
